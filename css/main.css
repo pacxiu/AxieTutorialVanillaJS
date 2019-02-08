@@ -1,0 +1,17 @@
+#axies {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.axie {
+  max-width: 250px;
+}
+
+#loader {
+  display: none;
+}
+
+#loader.visible {
+  display: inline-block;
+}
