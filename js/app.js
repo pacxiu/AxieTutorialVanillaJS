@@ -1,6 +1,5 @@
 const API_KEY = 'your api key for infura';
 let address = null;
-let axiesRequested = false;
 
 window.addEventListener("load", async function() {
 
@@ -18,7 +17,7 @@ window.addEventListener("load", async function() {
     window.web3 = new Web3(web3.currentProvider);
   } else {
     // connect to custom provider, like Infura if there is no wallet detected
-    web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/' + API_KEY)); 
+    window.web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/' + API_KEY)); 
   }
   
   setInterval(requestAccount, 1000);
@@ -32,22 +31,19 @@ function requestAccount() {
       if (address === undefined) {
         document.getElementById('eth-address').innerHTML = "No account";
       } else {
-        axiesRequested = false;
-        document.getElementById('eth-address').innerHTML = result[0];
-      }
-
-      if (!axiesRequested) {
         requestAxies();
+        document.getElementById('eth-address').innerHTML = result[0];
       }
     }
   });
 }
 
 function requestAxies() {
+  const BASE_URL = 'https://axieinfinity.com/api/';
+  const URL = BASE_URL + 'addresses/' + address + '/axies?offset=0&stage=4';
   document.getElementById('loader').classList.add('visible');
-  axiesRequested = true;
 
-  axios.get('https://axieinfinity.com/api/addresses/' + address + '/axies?offset=0&stage=4')
+  axios.get(URL)
     .then(function(response) {
       document.getElementById('loader').classList.remove('visible');
       paintAxies(response.data);
@@ -57,21 +53,23 @@ function requestAxies() {
     })
 }
 
-function paintAxies(axiesData) {
+async function paintAxies(axiesData) {
+  const BASE_URL = 'https://api.axieinfinity.com/v1/';
   const axiesContainer = document.getElementById('axies');
   const axies = axiesData.axies;
+  axiesContainer.innerHTML = '';
 
-  axies.forEach(function(axie) {
-    axiesContainer.insertAdjacentHTML('beforeend', '<img id="' + axie.id + '" class="axie" src="" alt="" />')
+  for (let i = 0; i < axies.length; i += 1) {
+    const axie = axies[i];
 
-    axios.get('https://api.axieinfinity.com/v1/figure/' + axie.id)
+    await axios.get(BASE_URL + 'figure/' + axie.id)
       .then(function(response) {
-        const images = response.data;
-        const image = document.getElementById(axie.id);
-        image.setAttribute('src', images.static.idle);
+        const staticImage = response.data.images.static.idle;
+        const HTML = '<img id="' + axie.id + '" class="axie" src="' + staticImage + '" alt="" />';
+        axiesContainer.insertAdjacentHTML('beforeend', HTML);
       })
       .catch(function(error) {
         console.log(error);
       })
-  })
+  }
 }
